@@ -7,6 +7,7 @@ Uso:
 """
 
 import json
+import math
 
 import numpy as np
 import pandas as pd
@@ -529,6 +530,71 @@ def seccion_comunas() -> dict:
     }
 
 
+# --- Mapas -----------------------------------------------------------------------
+
+LIMITES = RAIZ_PROYECTO / "data" / "limites"
+# En el mapa del país no se dibujan las islas oceánicas (Isla de Pascua, Juan Fernández, Desventuradas)
+# ni el Territorio Antártico, para que el continente no quede diminuto
+LON_MIN_PAIS = -76.0
+LAT_MIN_PAIS = -56.5
+AREA_MIN_PAIS = 0.01  # grados², deja fuera islotes que no se alcanzan a ver
+AREA_MIN_RM = 0.0001
+
+
+def area_anillo(anillo: list) -> float:
+    return abs(sum(x1 * y2 - x2 * y1 for (x1, y1), (x2, y2) in zip(anillo, anillo[1:] + anillo[:1]))) / 2
+
+
+def anillos(geometria: dict) -> list:
+    if geometria["type"] == "Polygon":
+        return geometria["coordinates"]
+    return [anillo for poligono in geometria["coordinates"] for anillo in poligono]
+
+
+def rutas_svg(geojson: dict, clave: str, escala: float, filtro=lambda anillo: True, area_min: float = 0) -> dict:
+    """Polígonos -> trazos SVG con una proyección equirectangular corregida por la latitud media.
+
+    Para áreas del tamaño de una región o del país alcanza: lo que importa es comparar colores,
+    no medir distancias. Devuelve el viewBox y un trazo por polígono.
+    """
+    validos = {
+        f["properties"][clave]: [a for a in anillos(f["geometry"]) if filtro(a) and area_anillo(a) >= area_min]
+        for f in geojson["features"]
+    }
+    puntos = [p for lista in validos.values() for a in lista for p in a]
+    lon_min, lon_max = min(p[0] for p in puntos), max(p[0] for p in puntos)
+    lat_min, lat_max = min(p[1] for p in puntos), max(p[1] for p in puntos)
+    factor = math.cos(math.radians((lat_min + lat_max) / 2))
+
+    def xy(lon, lat):
+        return round((lon - lon_min) * factor * escala, 1), round((lat_max - lat) * escala, 1)
+
+    rutas = {}
+    for codigo, lista in validos.items():
+        partes = []
+        for anillo in lista:
+            coords = [xy(lon, lat) for lon, lat in anillo]
+            partes.append("M" + "L".join(f"{x:g},{y:g}" for x, y in coords) + "Z")
+        rutas[int(codigo)] = "".join(partes)
+    ancho, alto = xy(lon_max, lat_min)
+    return {"viewbox": [0, 0, ancho, alto], "rutas": rutas}
+
+
+def seccion_mapas() -> dict:
+    regiones = json.loads((LIMITES / "regiones.geojson").read_text(encoding="utf-8"))
+    comunas_rm = json.loads((LIMITES / "comunas_rm.geojson").read_text(encoding="utf-8"))
+
+    def en_continente(anillo):
+        return max(p[0] for p in anillo) > LON_MIN_PAIS and max(p[1] for p in anillo) > LAT_MIN_PAIS
+
+    pais = rutas_svg(regiones, "COD_REGION", escala=20, filtro=en_continente, area_min=AREA_MIN_PAIS)
+    rm = rutas_svg(comunas_rm, "CUT", escala=300, area_min=AREA_MIN_RM)
+    return {
+        "pais": {"viewbox": pais["viewbox"], "regiones": [{"region_codigo": c, "ruta": r} for c, r in pais["rutas"].items()]},
+        "rm": {"viewbox": rm["viewbox"], "comunas": [{"cut": c, "ruta": r} for c, r in rm["rutas"].items()]},
+    }
+
+
 def main() -> None:
     print("Exportando:")
     guardar("00_datos.json", seccion_datos())
@@ -538,6 +604,7 @@ def main() -> None:
     guardar("04_drogas_armas.json", seccion_drogas_armas())
     guardar("05_regiones.json", seccion_regiones())
     guardar("06_comunas.json", seccion_comunas())
+    guardar("07_mapas.json", seccion_mapas())
 
 
 if __name__ == "__main__":
