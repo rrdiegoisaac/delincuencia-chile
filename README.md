@@ -2,7 +2,7 @@
 
 ¿Hay más delitos en Chile que antes? ¿Dónde se concentran? Este proyecto responde esas preguntas con los **casos policiales** que publica el **Centro de Estudios y Análisis del Delito (CEAD)**: mes a mes desde enero de 2005, para 48 subgrupos de delitos, el total del país, las 16 regiones y las 346 comunas. Los datos se obtienen con web scraping, se guardan en SQLite y se analizan con Python, junto con la población del INE.
 
-No soy experto en seguridad: soy analista de datos. Por eso la mitad del trabajo es entender qué miden estos registros y qué cambios del propio registro hay que tener en cuenta antes de sacar conclusiones.
+Los registros policiales son la fuente más citada cuando se habla de delincuencia, y también una de las más fáciles de leer mal. Por eso el análisis parte por entender cómo se generan estos datos y qué cambios del propio registro hay que tener en cuenta antes de sacar conclusiones.
 
 El resultado es una nota interactiva, con gráficos y explicación de cada hallazgo, publicada en mi portafolio.
 
@@ -37,7 +37,7 @@ cead.minsegpublica.gob.cl ──► scraper (requests + BeautifulSoup) ──►
    - Tasas por 100.000 habitantes por familia, de 2005 a 2025, con 2019 como referencia prepandemia.
    - Delitos violentos: homicidios y robos, con sumas móviles de 12 meses.
    - Peso de las detenciones en flagrancia en cada subgrupo.
-   - Regiones y comunas: tasas, concentración y sensibilidad al denominador de población.
+   - Regiones y comunas: tasas, concentración, sensibilidad al denominador de población y mapas (regiones del país y comunas de la RM).
 4. **Exportación.** Cada sección genera un JSON resumido que consumen los gráficos de la nota.
 
 ## Estructura
@@ -46,6 +46,7 @@ cead.minsegpublica.gob.cl ──► scraper (requests + BeautifulSoup) ──►
 scraper/
   scrape_cead.py       Descarga los casos policiales del CEAD a SQLite
   poblacion.py         Población por comuna del INE (proyecciones y Censo 2024)
+  limites.py           Límites de regiones y de comunas de la RM, para los mapas
 analisis/
   datos.py             Carga de casos, población y definiciones comunes
   exportar.py          Calcula cada sección y exporta los JSON
@@ -54,6 +55,7 @@ tests/                 Pruebas del parser y de las funciones del análisis (pyte
 consultas.sql          Consultas de exploración con CTE y funciones de ventana
 data/
   delitos.db           Base SQLite (no se incluye en el repo: se regenera con los scripts de scraper/)
+  limites/             Límites de regiones y de comunas de la RM (GeoJSON simplificado, INE)
 export/                Resultados resumidos (JSON) para los gráficos
 ```
 
@@ -80,6 +82,7 @@ pip install -r requirements.txt
 python scraper/scrape_cead.py --solo regiones   # país y regiones (~5 minutos)
 python scraper/scrape_cead.py                   # además, las 346 comunas (~1 hora)
 python scraper/poblacion.py                     # población del INE
+python scraper/limites.py                       # límites para los mapas
 python analisis/exportar.py                     # genera export/*.json
 
 pip install -r requirements-dev.txt
@@ -114,6 +117,7 @@ Si la descarga se interrumpe, al volver a ejecutarla sigue desde el último terr
 - **Censo 2024:** INE, resultados por comuna. <https://censo2024.ine.gob.cl/resultados/>
 - **Omisión censal y población base 2024:** INE, estimaciones y proyecciones de población base 2024 (enero de 2026). <https://www.ine.gob.cl/docs/default-source/prensa-y-comunicacion/eepp2024.pdf>
 - **Denuncia de delitos violentos:** INE, ENUSC 2024. <https://www.ine.gob.cl/sala-de-prensa/prensa/general/noticia/2025/07/07/subsecretar%C3%ADa-de-prevenci%C3%B3n-del-delito-e-ine-presentan-los-resultados-de-la-encuesta-nacional-urbana-de-seguridad-ciudadana-(enusc)-2024>
+- **Límites de regiones y comunas:** INE, servicio del visor de resultados del Censo 2024. <https://censo2024.ine.gob.cl/resultados/>
 - **Homicidios (cifra oficial):** Centro para la Prevención de Homicidios y Delitos Violentos. <https://prevenciondehomicidios.cl/estadisticas>
 
 ## Autor
