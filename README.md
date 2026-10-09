@@ -6,7 +6,7 @@ Los registros policiales son la fuente más citada cuando se habla de delincuenc
 
 El resultado es una nota interactiva, con gráficos y explicación de cada hallazgo, publicada en mi portafolio.
 
-- **Nota interactiva:** _(enlace al portafolio, próximamente)_
+- **Nota interactiva:** <https://rrdiegoisaac.vercel.app/proyectos/delitos-chile>
 
 > En 2024 hice una primera versión ([rrdiegoisaac/delincuencia](https://github.com/rrdiegoisaac/delincuencia)): una aplicación en Streamlit con 35 delitos por región hasta 2023. Esta la rehice desde cero: el CEAD cambió de sitio y de clasificación de delitos, y ahora el análisis llega a nivel de comuna y trata explícitamente los límites de los datos.
 
