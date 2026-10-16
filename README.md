@@ -7,6 +7,7 @@ Los registros policiales son la fuente más citada cuando se habla de delincuenc
 El resultado es una nota interactiva, con gráficos y explicación de cada hallazgo, publicada en mi portafolio.
 
 - **Nota interactiva:** <https://rrdiegoisaac.vercel.app/proyectos/delitos-chile>
+- **Dataset en Kaggle:** [Chile Police-Reported Crime 2005–2026 (CEAD)](https://www.kaggle.com/datasets/diegoisaac1/chile-police-reported-crime-20052026-cead): todos los casos por comuna, región, delito y mes, con la población del INE, en CSV y SQLite
 
 > En 2024 hice una primera versión ([rrdiegoisaac/delincuencia](https://github.com/rrdiegoisaac/delincuencia)): una aplicación en Streamlit con 35 delitos por región hasta 2023. Esta la rehice desde cero: el CEAD cambió de sitio y de clasificación de delitos, y ahora el análisis llega a nivel de comuna y trata explícitamente los límites de los datos.
 
@@ -54,7 +55,7 @@ analisis/
 tests/                 Pruebas del parser y de las funciones del análisis (pytest)
 consultas.sql          Consultas de exploración con CTE y funciones de ventana
 data/
-  delitos.db           Base SQLite (no se incluye en el repo: se regenera con los scripts de scraper/)
+  delitos.db           Base SQLite (no se incluye en el repo: se regenera con los scripts de scraper/ o se descarga de Kaggle)
   limites/             Límites de regiones y de comunas de la RM (GeoJSON simplificado, INE)
 export/                Resultados resumidos (JSON) para los gráficos
 ```
@@ -90,6 +91,8 @@ python -m pytest                                # pruebas
 ```
 
 Si la descarga se interrumpe, al volver a ejecutarla sigue desde el último territorio guardado. El CEAD corrige cifras pasadas, así que para actualizar todo se usa `--rehacer`.
+
+Para no esperar la descarga, también se puede bajar `delitos.db` desde el [dataset en Kaggle](https://www.kaggle.com/datasets/diegoisaac1/chile-police-reported-crime-20052026-cead) y copiarla en `data/`.
 
 ## Decisiones de análisis
 
